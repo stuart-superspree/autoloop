@@ -1,0 +1,2224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0F0F0D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>AutoLoop — 2023 BMW 3 Series</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   AUTOLOOP — VEHICLE COMPANION APP
+   Awe-informed, lifestyle-centred, trust-building
+═══════════════════════════════════════════════ */
+:root {
+  --ink:      #0F0F0D;
+  --ink-2:    #1C1C19;
+  --ink-3:    #2A2A26;
+  --parchment:#F5F2EA;
+  --bone:     #EDE9DF;
+  --mist:     #C8C4B8;
+  --smoke:    #8A8780;
+  --gold:     #C4922A;
+  --gold-lt:  #E8B84B;
+  --gold-dim: rgba(196,146,42,0.15);
+  --white:    #FAFAF7;
+  --success:  #3A7D5E;
+
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 22px;
+  --r-xl: 32px;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--ink);
+  overflow: hidden;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* ── APP SHELL ── */
+#app {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  height: 100dvh;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+/* ── SCREENS ── */
+.screen {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.55s var(--ease-in-out), transform 0.55s var(--ease-out);
+  transform: translateY(18px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.screen.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0);
+}
+.screen.exit {
+  opacity: 0;
+  transform: translateY(-12px);
+  pointer-events: none;
+}
+
+/* ── PROGRESS DOTS ── */
+#progress {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 430px;
+  width: 100%;
+  padding: 14px 24px 0;
+  display: flex;
+  gap: 5px;
+  z-index: 200;
+  pointer-events: none;
+}
+.prog-seg {
+  flex: 1;
+  height: 2px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.prog-seg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--gold);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s var(--ease-out);
+}
+.prog-seg.done::after { transform: scaleX(1); }
+.prog-seg.active::after {
+  transform: scaleX(1);
+  background: var(--gold-lt);
+}
+
+/* ── NFC TAP SPLASH ── */
+#screen-tap {
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 24px;
+}
+#screen-tap .tap-ring {
+  pointer-events: none;
+}
+.tap-ring {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  border: 1px solid rgba(196,146,42,0.3);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  margin-bottom: 20px;
+  z-index: 1;
+  isolation: isolate;
+  flex-shrink: 0;
+}
+.tap-ring::before {
+  content: '';
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  border: 1px solid rgba(196,146,42,0.12);
+  animation: ring-pulse 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+.tap-ring::after {
+  content: '';
+  position: absolute;
+  inset: -44px;
+  border-radius: 50%;
+  border: 1px solid rgba(196,146,42,0.06);
+  animation: ring-pulse 2.5s ease-in-out infinite 0.4s;
+  pointer-events: none;
+}
+@keyframes ring-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+.tap-icon {
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+}
+.tap-icon svg { width: 36px; height: 36px; }
+.tap-brand {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+.tap-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--parchment);
+  text-align: center;
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+.tap-sub {
+  font-size: 14px;
+  color: var(--smoke);
+  text-align: center;
+  line-height: 1.6;
+  max-width: 260px;
+}
+.tap-btn {
+  margin-top: 24px;
+  padding: 14px 36px;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 100px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: all 0.2s;
+  position: relative;
+  z-index: 10;
+}
+.tap-btn:active { transform: scale(0.97); opacity: 0.9; }
+
+/* ── SCREEN 1: PLACE AWE — THE CAR IN THE WORLD ── */
+#screen-place {
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+}
+.hero-visual {
+  position: relative;
+  width: 100%;
+  height: 52vh;
+  min-height: 280px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.hero-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: var(--ink-3);
+}
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(15,15,13,0) 30%, rgba(15,15,13,0.6) 70%, rgba(15,15,13,1) 100%);
+}
+.hero-badge {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(196,146,42,0.9);
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 100px;
+  backdrop-filter: blur(8px);
+}
+.hero-content {
+  padding: 0 24px;
+  flex: 1;
+}
+.hero-eyebrow {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+  margin-top: -4px;
+}
+.hero-title {
+  font-family: var(--font-display);
+  font-size: 34px;
+  font-weight: 500;
+  color: var(--parchment);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+.hero-sub {
+  font-size: 15px;
+  color: var(--smoke);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.hero-quick-stats {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.quick-stat {
+  background: var(--ink-3);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--r-sm);
+  padding: 9px 14px;
+  flex: 1;
+  min-width: 80px;
+  text-align: center;
+}
+.qs-val {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--gold-lt);
+  display: block;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.qs-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--smoke);
+}
+.place-quote {
+  border-left: 2px solid var(--gold);
+  padding-left: 16px;
+  margin-bottom: 28px;
+}
+.place-quote p {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 16px;
+  color: var(--mist);
+  line-height: 1.6;
+}
+.place-quote cite {
+  font-size: 11px;
+  color: var(--smoke);
+  font-style: normal;
+  letter-spacing: 0.06em;
+}
+.cta-row {
+  display: flex;
+  gap: 10px;
+  padding: 0 24px 32px;
+}
+.btn-primary {
+  flex: 2;
+  padding: 16px;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 100px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: all 0.2s;
+}
+.btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+.btn-secondary {
+  flex: 1;
+  padding: 16px;
+  background: transparent;
+  color: var(--parchment);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 100px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-secondary:active { background: rgba(255,255,255,0.06); }
+
+/* ── SCREEN 2: FUTURE AWE — YOUR LIFE WITH IT ── */
+#screen-future {
+  background: var(--ink);
+  padding-top: 56px;
+  min-height: 100%;
+}
+.section-intro {
+  padding: 0 24px 24px;
+}
+.section-kicker {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.section-heading {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--parchment);
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+.section-body {
+  font-size: 15px;
+  color: var(--smoke);
+  line-height: 1.7;
+}
+
+/* Lifestyle selector */
+.lifestyle-prompt {
+  padding: 0 24px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--mist);
+  font-style: italic;
+}
+.lifestyle-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 20px;
+  -webkit-overflow-scrolling: touch;
+}
+.lifestyle-tabs::-webkit-scrollbar { display: none; }
+.ls-tab {
+  flex-shrink: 0;
+  padding: 9px 18px;
+  border-radius: 100px;
+  border: 1px solid rgba(255,255,255,0.14);
+  font-size: 13px;
+  color: var(--mist);
+  cursor: pointer;
+  background: transparent;
+  font-family: var(--font-body);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.ls-tab.active {
+  background: var(--gold-dim);
+  border-color: var(--gold);
+  color: var(--gold-lt);
+}
+.ls-tab:active { opacity: 0.8; }
+
+/* Lifestyle scenario cards */
+.scenario-wrap {
+  padding: 0 24px;
+  margin-bottom: 28px;
+  position: relative;
+  min-height: 260px;
+}
+.scenario-card {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s var(--ease-in-out), transform 0.35s var(--ease-out);
+  transform: translateX(16px);
+}
+.scenario-card.active {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateX(0);
+  position: relative;
+}
+.scenario-visual {
+  width: 100%;
+  height: 180px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  margin-bottom: 16px;
+  background: var(--ink-3);
+  position: relative;
+}
+.scenario-scene {
+  width: 100%; height: 100%;
+  display: block;
+}
+.scenario-label-bar {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: linear-gradient(to top, rgba(15,15,13,0.9), transparent);
+  padding: 20px 16px 12px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.scenario-name {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--parchment);
+  font-style: italic;
+}
+.scenario-time {
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+.scenario-text {
+  font-size: 15px;
+  color: var(--smoke);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+.scenario-moment {
+  background: var(--ink-3);
+  border-radius: var(--r-md);
+  border-left: 3px solid var(--gold);
+  padding: 14px 16px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--mist);
+  line-height: 1.6;
+}
+
+/* Future projection bar */
+.projection-bar {
+  margin: 0 24px 28px;
+  background: var(--ink-2);
+  border-radius: var(--r-md);
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.proj-title {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+.proj-timeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 10px;
+  position: relative;
+}
+.proj-node {
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
+.proj-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  border: 2px solid var(--smoke);
+  margin: 0 auto 6px;
+  position: relative;
+  z-index: 1;
+  transition: border-color 0.3s, background 0.3s;
+}
+.proj-node.reached .proj-dot {
+  border-color: var(--gold);
+  background: var(--gold);
+}
+.proj-node-label {
+  font-size: 10px;
+  color: var(--smoke);
+  font-weight: 400;
+}
+.proj-node.reached .proj-node-label { color: var(--gold-lt); }
+.proj-line {
+  position: absolute;
+  top: 5px;
+  left: 5%;
+  right: 5%;
+  height: 2px;
+  background: var(--ink-3);
+  z-index: 0;
+}
+.proj-line-fill {
+  height: 100%;
+  background: var(--gold);
+  width: 0%;
+  transition: width 1.2s var(--ease-out);
+  border-radius: 2px;
+}
+.proj-insight {
+  font-size: 13px;
+  color: var(--mist);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* ── SCREEN 3: SYSTEMS AWE — THE FULL STORY ── */
+#screen-systems {
+  background: var(--ink);
+  padding-top: 56px;
+  min-height: 100%;
+}
+.trust-header {
+  padding: 0 24px 8px;
+}
+.trust-score {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--ink-2);
+  border-radius: var(--r-lg);
+  padding: 18px;
+  margin: 0 24px 24px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.trust-ring {
+  width: 62px; height: 62px;
+  border-radius: 50%;
+  border: 3px solid var(--ink-3);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+}
+.trust-ring svg {
+  position: absolute;
+  inset: -3px;
+  width: calc(100% + 6px);
+  height: calc(100% + 6px);
+  transform: rotate(-90deg);
+}
+.trust-ring-num {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--gold-lt);
+  position: relative;
+  z-index: 1;
+}
+.trust-info h3 {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--parchment);
+  margin-bottom: 4px;
+}
+.trust-info p {
+  font-size: 13px;
+  color: var(--smoke);
+  line-height: 1.5;
+}
+.trust-info .verified {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: #4CAF7D;
+  margin-top: 5px;
+  font-weight: 500;
+}
+
+/* Provenance timeline */
+.provenance-section {
+  padding: 0 24px;
+  margin-bottom: 24px;
+}
+.prov-title {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+.prov-timeline {
+  position: relative;
+  padding-left: 28px;
+}
+.prov-timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: rgba(255,255,255,0.1);
+}
+.prov-item {
+  position: relative;
+  margin-bottom: 20px;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity 0.4s, transform 0.4s;
+}
+.prov-item.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+.prov-item::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 6px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--gold);
+  border: 2px solid var(--ink);
+}
+.prov-item.neutral::before { background: var(--smoke); }
+.prov-date {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+  margin-bottom: 3px;
+}
+.prov-item.neutral .prov-date { color: var(--smoke); }
+.prov-event {
+  font-size: 14px;
+  color: var(--parchment);
+  font-weight: 400;
+  line-height: 1.4;
+}
+.prov-detail {
+  font-size: 12px;
+  color: var(--smoke);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* Spec accordion */
+.spec-section {
+  margin: 0 24px 24px;
+}
+.spec-group {
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  overflow: hidden;
+}
+.spec-group-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  cursor: pointer;
+}
+.spec-group-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--parchment);
+  letter-spacing: 0.04em;
+}
+.spec-group-chevron {
+  font-size: 12px;
+  color: var(--smoke);
+  transition: transform 0.25s;
+}
+.spec-group.open .spec-group-chevron { transform: rotate(180deg); }
+.spec-rows {
+  display: none;
+  padding-bottom: 8px;
+}
+.spec-group.open .spec-rows { display: block; }
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 8px 0;
+  border-top: 1px solid rgba(255,255,255,0.04);
+}
+.spec-key {
+  font-size: 13px;
+  color: var(--smoke);
+}
+.spec-val {
+  font-size: 13px;
+  color: var(--mist);
+  font-weight: 400;
+  text-align: right;
+  max-width: 55%;
+}
+
+/* ── SCREEN 4: COMPETENCE AWE — TRANSPARENT PRICING ── */
+#screen-competence {
+  background: var(--ink);
+  padding-top: 56px;
+  min-height: 100%;
+}
+.price-hero {
+  padding: 0 24px 24px;
+  text-align: center;
+}
+.price-main {
+  font-family: var(--font-display);
+  font-size: 52px;
+  font-weight: 400;
+  color: var(--parchment);
+  letter-spacing: -0.02em;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.price-sub {
+  font-size: 14px;
+  color: var(--smoke);
+  margin-bottom: 4px;
+}
+.price-monthly {
+  font-size: 16px;
+  color: var(--gold-lt);
+  font-weight: 500;
+}
+
+.breakdown-section {
+  margin: 0 24px 24px;
+  background: var(--ink-2);
+  border-radius: var(--r-lg);
+  border: 1px solid rgba(255,255,255,0.06);
+  overflow: hidden;
+}
+.breakdown-header {
+  padding: 14px 18px;
+  background: var(--ink-3);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.breakdown-row:last-child { border-bottom: none; }
+.breakdown-label {
+  font-size: 14px;
+  color: var(--mist);
+}
+.breakdown-value {
+  font-size: 14px;
+  color: var(--parchment);
+  font-weight: 500;
+}
+.breakdown-value.positive { color: #4CAF7D; }
+.breakdown-value.gold { color: var(--gold-lt); }
+.breakdown-total {
+  background: var(--ink-3);
+  padding: 16px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.breakdown-total-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--parchment);
+}
+.breakdown-total-value {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--gold-lt);
+}
+
+/* Finance slider */
+.finance-section {
+  margin: 0 24px 28px;
+}
+.finance-title {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+.finance-card {
+  background: var(--ink-2);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.finance-monthly-display {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.finance-amount {
+  font-family: var(--font-display);
+  font-size: 42px;
+  color: var(--gold-lt);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.finance-desc {
+  font-size: 12px;
+  color: var(--smoke);
+}
+.slider-row {
+  margin-bottom: 16px;
+}
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--smoke);
+  margin-bottom: 8px;
+}
+.slider-label span:last-child { color: var(--mist); font-weight: 500; }
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--ink-3);
+  border-radius: 2px;
+  outline: none;
+  margin: 0;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--gold);
+  cursor: pointer;
+  border: 2px solid var(--ink-2);
+  box-shadow: 0 2px 8px rgba(196,146,42,0.4);
+}
+.finance-note {
+  font-size: 11px;
+  color: var(--smoke);
+  text-align: center;
+  line-height: 1.5;
+  margin-top: 14px;
+  opacity: 0.7;
+}
+
+/* ── SCREEN 5: ACTION — AGENCY RESTORED ── */
+#screen-action {
+  background: var(--ink);
+  padding-top: 56px;
+  min-height: 100%;
+}
+.action-header {
+  padding: 0 24px 20px;
+}
+.action-heading {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--parchment);
+  line-height: 1.2;
+  margin-bottom: 10px;
+}
+.action-sub {
+  font-size: 15px;
+  color: var(--smoke);
+  line-height: 1.6;
+}
+.action-cards {
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.action-card {
+  background: var(--ink-2);
+  border-radius: var(--r-lg);
+  border: 1px solid rgba(255,255,255,0.07);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.action-card:active {
+  background: var(--ink-3);
+  border-color: rgba(196,146,42,0.4);
+}
+.action-card.primary-action {
+  background: var(--gold-dim);
+  border-color: rgba(196,146,42,0.4);
+}
+.action-icon {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.action-card.primary-action .action-icon {
+  background: var(--gold);
+}
+.action-icon svg {
+  width: 20px; height: 20px;
+  stroke: var(--mist);
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.action-card.primary-action .action-icon svg { stroke: var(--ink); }
+.action-text h4 {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--parchment);
+  margin-bottom: 3px;
+}
+.action-text p {
+  font-size: 13px;
+  color: var(--smoke);
+  line-height: 1.4;
+}
+.action-chevron {
+  margin-left: auto;
+  color: var(--smoke);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Shortlist button */
+.shortlist-bar {
+  margin: 0 24px 20px;
+  display: flex;
+  gap: 10px;
+}
+.shortlist-btn {
+  flex: 1;
+  padding: 14px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 100px;
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.2s;
+}
+.shortlist-btn:active { background: rgba(255,255,255,0.05); }
+.shortlist-btn.saved {
+  border-color: var(--gold);
+  color: var(--gold-lt);
+  background: var(--gold-dim);
+}
+.shortlist-btn svg {
+  width: 16px; height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.5;
+}
+.shortlist-btn.saved svg { fill: var(--gold-lt); }
+
+/* AutoLoop footer attribution */
+.al-attribution {
+  padding: 0 24px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.al-logo-mark {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--gold-dim);
+  border: 1px solid rgba(196,146,42,0.3);
+  display: flex; align-items: center; justify-content: center;
+}
+.al-logo-mark svg {
+  width: 10px; height: 10px;
+  fill: var(--gold);
+}
+.al-text {
+  font-size: 11px;
+  color: var(--smoke);
+  letter-spacing: 0.06em;
+}
+.al-text span {
+  color: var(--gold);
+  font-weight: 500;
+}
+
+/* ── NAV BAR ── */
+#nav-bar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 430px;
+  width: 100%;
+  background: rgba(15,15,13,0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  padding: 8px 0 env(safe-area-inset-bottom, 16px);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+#nav-bar.visible { opacity: 1; pointer-events: all; }
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.nav-item:active { opacity: 0.6; }
+.nav-icon {
+  width: 22px; height: 22px;
+}
+.nav-icon svg {
+  width: 100%; height: 100%;
+  stroke: var(--smoke);
+  fill: none;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.2s;
+}
+.nav-item.active .nav-icon svg { stroke: var(--gold); }
+.nav-label {
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--smoke);
+  transition: color 0.2s;
+}
+.nav-item.active .nav-label { color: var(--gold); }
+
+/* ── BOTTOM PADDING for nav ── */
+.screen { padding-bottom: 80px; }
+#screen-tap { padding-bottom: 0; }
+
+/* ── LEAD FORM MODAL ── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 300;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  display: flex;
+  align-items: flex-end;
+}
+.modal-backdrop.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.modal-sheet {
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  background: var(--ink-2);
+  border-radius: 24px 24px 0 0;
+  padding: 24px 24px 40px;
+  transform: translateY(100%);
+  transition: transform 0.4s var(--ease-out);
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.modal-backdrop.open .modal-sheet {
+  transform: translateY(0);
+}
+.modal-handle {
+  width: 36px; height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+.modal-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--parchment);
+  margin-bottom: 6px;
+}
+.modal-sub {
+  font-size: 14px;
+  color: var(--smoke);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+.form-field {
+  margin-bottom: 14px;
+}
+.form-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  display: block;
+  margin-bottom: 7px;
+}
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--ink-3);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--r-md);
+  color: var(--parchment);
+  font-family: var(--font-body);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+.form-input::placeholder { color: var(--smoke); opacity: 0.6; }
+.form-input:focus { border-color: var(--gold); }
+.form-submit {
+  width: 100%;
+  padding: 16px;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 100px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+  letter-spacing: 0.04em;
+}
+.form-submit:active { transform: scale(0.98); opacity: 0.9; }
+
+/* ── SUCCESS STATE ── */
+.success-state {
+  text-align: center;
+  padding: 20px 0;
+  display: none;
+}
+.success-state.show { display: block; }
+.success-checkmark {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: rgba(76, 175, 125, 0.15);
+  border: 2px solid #4CAF7D;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 24px;
+}
+.success-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--parchment);
+  margin-bottom: 8px;
+}
+.success-body {
+  font-size: 14px;
+  color: var(--smoke);
+  line-height: 1.6;
+}
+
+/* ── UTILITY ── */
+.divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin: 0 24px 24px;
+}
+.scroll-hint {
+  text-align: center;
+  padding: 8px 0 4px;
+  font-size: 11px;
+  color: var(--smoke);
+  opacity: 0.5;
+  letter-spacing: 0.06em;
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Progress bar -->
+  <div id="progress">
+    <div class="prog-seg" id="seg-0"></div>
+    <div class="prog-seg" id="seg-1"></div>
+    <div class="prog-seg" id="seg-2"></div>
+    <div class="prog-seg" id="seg-3"></div>
+    <div class="prog-seg" id="seg-4"></div>
+  </div>
+
+  <!-- ══ SCREEN 0: TAP SPLASH ══ -->
+  <div class="screen active" id="screen-tap">
+    <div class="tap-brand">AutoLoop by Superspree</div>
+    <div class="tap-ring" aria-hidden="true">
+      <div class="tap-icon">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M24 8C15.163 8 8 15.163 8 24s7.163 16 16 16 16-7.163 16-16" stroke="#C4922A" stroke-width="2" stroke-linecap="round"/>
+          <path d="M24 14c-5.523 0-10 4.477-10 10s4.477 10 10 10" stroke="#C4922A" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 3"/>
+          <circle cx="24" cy="24" r="4" fill="#C4922A"/>
+          <path d="M36 12l4-4m-4 0h4v4" stroke="#E8B84B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+    </div>
+    <div class="tap-title">You&#8217;ve discovered<br>something worth knowing.</div>
+    <div class="tap-sub">This vehicle has a story. Tap to begin exploring it &#8212; at your own pace, on your terms.</div>
+    <button class="tap-btn" id="begin-btn" type="button" style="cursor:pointer;position:relative;z-index:999;">Begin your journey &#8594;</button>
+  </div>
+
+  <!-- ══ SCREEN 1: PLACE AWE ══ -->
+  <div class="screen" id="screen-place">
+    <div class="hero-visual">
+      <canvas class="hero-canvas" id="hero-canvas"></canvas>
+      <div class="hero-overlay"></div>
+      <div class="hero-badge">Just arrived</div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">2023 · 18,400 miles</div>
+      <div class="hero-title">BMW 3 Series<br>320d M Sport</div>
+      <div class="hero-sub">A precision instrument for the roads you actually drive.</div>
+      <div class="hero-quick-stats">
+        <div class="quick-stat">
+          <span class="qs-val">190</span>
+          <span class="qs-label">BHP</span>
+        </div>
+        <div class="quick-stat">
+          <span class="qs-val">6.1s</span>
+          <span class="qs-label">0–60</span>
+        </div>
+        <div class="quick-stat">
+          <span class="qs-val">56mpg</span>
+          <span class="qs-label">Combined</span>
+        </div>
+        <div class="quick-stat">
+          <span class="qs-val">B</span>
+          <span class="qs-label">Tax band</span>
+        </div>
+      </div>
+      <div class="place-quote">
+        <p>"This isn't just a car. It's how you choose to move through the world — and what that says about the life you're building."</p>
+        <cite>— AutoLoop experience guide</cite>
+      </div>
+    </div>
+    <div class="cta-row">
+      <button class="btn-primary" onclick="window.goToScreen('screen-future')">Imagine your life with it →</button>
+      <button class="btn-secondary" onclick="window.goToScreen('screen-systems')">Full story</button>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 2: FUTURE AWE — YOUR LIFE WITH IT ══ -->
+  <div class="screen" id="screen-future">
+    <div class="section-intro">
+      <div class="section-kicker">Your world with it</div>
+      <div class="section-heading">Picture Tuesday morning.<br>Picture the weekend.</div>
+      <div class="section-body">The best way to understand whether something fits your life is to actually place it there. Choose a scenario below.</div>
+    </div>
+
+    <div class="lifestyle-prompt">Which one is most like you?</div>
+    <div class="lifestyle-tabs">
+      <button class="ls-tab active" onclick="window.setScenario(0, this)">Daily drive</button>
+      <button class="ls-tab" onclick="window.setScenario(1, this)">Family life</button>
+      <button class="ls-tab" onclick="window.setScenario(2, this)">Weekend escape</button>
+      <button class="ls-tab" onclick="window.setScenario(3, this)">Long distance</button>
+    </div>
+
+    <div class="scenario-wrap" id="scenario-wrap">
+      <!-- Scenario 0: Daily drive -->
+      <div class="scenario-card active" id="scenario-0">
+        <div class="scenario-visual">
+          <canvas class="scenario-scene" id="scene-0"></canvas>
+          <div class="scenario-label-bar">
+            <span class="scenario-name">The morning commute</span>
+            <span class="scenario-time">7:42am</span>
+          </div>
+        </div>
+        <p class="scenario-text">You leave slightly later than planned. The 320d's 190bhp and 8-speed automatic handle the 42-minute run with quiet authority. Adaptive cruise takes the motorway stress away. You arrive having covered 34 miles on less than £3 of diesel.</p>
+        <div class="scenario-moment">"You got here first. You always do now."</div>
+      </div>
+      <!-- Scenario 1: Family -->
+      <div class="scenario-card" id="scenario-1">
+        <div class="scenario-visual">
+          <canvas class="scenario-scene" id="scene-1"></canvas>
+          <div class="scenario-label-bar">
+            <span class="scenario-name">Saturday morning</span>
+            <span class="scenario-time">9:15am</span>
+          </div>
+        </div>
+        <p class="scenario-text">Three isofix points, a 480-litre boot, and rear legroom that means no complaints from the back seat. The Sport suspension is firm enough to feel alive, gentle enough to let them sleep on the way home.</p>
+        <div class="scenario-moment">"The kids actually look forward to the drive now."</div>
+      </div>
+      <!-- Scenario 2: Weekend -->
+      <div class="scenario-card" id="scenario-2">
+        <div class="scenario-visual">
+          <canvas class="scenario-scene" id="scene-2"></canvas>
+          <div class="scenario-label-bar">
+            <span class="scenario-name">Peak District, late October</span>
+            <span class="scenario-time">Friday 4pm</span>
+          </div>
+        </div>
+        <p class="scenario-text">You book on a Thursday. Friday afternoon, the M1 opens up, and so does the car. The B-roads before dusk are what you came for. 56mpg on the motorway means you arrive with range to spare and a reason to smile.</p>
+        <div class="scenario-moment">"This is what weekends were always supposed to feel like."</div>
+      </div>
+      <!-- Scenario 3: Long distance -->
+      <div class="scenario-card" id="scenario-3">
+        <div class="scenario-visual">
+          <canvas class="scenario-scene" id="scene-3"></canvas>
+          <div class="scenario-label-bar">
+            <span class="scenario-name">Edinburgh. One stop.</span>
+            <span class="scenario-time">400 miles</span>
+          </div>
+        </div>
+        <p class="scenario-text">The 320d was designed for exactly this. Heated seats, M Sport steering, harman/kardon audio, and heads-up display keep four hours feeling like two. Fuel cost: £42. Arrived: comfortable.</p>
+        <div class="scenario-moment">"I forgot I was even driving. That's the point."</div>
+      </div>
+    </div>
+
+    <div class="projection-bar">
+      <div class="proj-title">Where this car takes you — over time</div>
+      <div style="position:relative">
+        <div class="proj-line"><div class="proj-line-fill" id="proj-fill"></div></div>
+        <div class="proj-timeline">
+          <div class="proj-node reached" id="pn0">
+            <div class="proj-dot"></div>
+            <div class="proj-node-label">Now</div>
+          </div>
+          <div class="proj-node" id="pn1">
+            <div class="proj-dot"></div>
+            <div class="proj-node-label">Year 1</div>
+          </div>
+          <div class="proj-node" id="pn2">
+            <div class="proj-dot"></div>
+            <div class="proj-node-label">Year 3</div>
+          </div>
+          <div class="proj-node" id="pn3">
+            <div class="proj-dot"></div>
+            <div class="proj-node-label">Year 5</div>
+          </div>
+        </div>
+      </div>
+      <div class="proj-insight" id="proj-insight">12,000 miles per year · Full service history maintained · Estimated residual value: <strong style="color:#E8B84B">£16,200</strong></div>
+    </div>
+
+    <div class="cta-row">
+      <button class="btn-primary" onclick="window.goToScreen('screen-systems')">See the full story →</button>
+      <button class="btn-secondary" onclick="window.goToScreen('screen-competence')">Pricing</button>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 3: SYSTEMS AWE — THE FULL STORY ══ -->
+  <div class="screen" id="screen-systems">
+    <div class="trust-header">
+      <div class="section-kicker">Complete provenance</div>
+      <div class="section-heading" style="padding:0 24px;font-family:'Playfair Display',serif;font-size:26px;color:#F5F2EA;line-height:1.2;margin-bottom:16px;">Nothing hidden.<br>Every chapter shown.</div>
+    </div>
+
+    <div class="trust-score">
+      <div class="trust-ring">
+        <svg viewBox="0 0 62 62">
+          <circle cx="31" cy="31" r="26" fill="none" stroke="#2A2A26" stroke-width="4"/>
+          <circle cx="31" cy="31" r="26" fill="none" stroke="#C4922A" stroke-width="4"
+                  stroke-dasharray="163.4" stroke-dashoffset="22" stroke-linecap="round"/>
+        </svg>
+        <div class="trust-ring-num">93</div>
+      </div>
+      <div class="trust-info">
+        <h3>Trust score: Excellent</h3>
+        <p>Full service history · No hidden defects · One registered keeper · DVLA verified</p>
+        <div class="verified">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#4CAF7D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Independently verified
+        </div>
+      </div>
+    </div>
+
+    <div class="provenance-section">
+      <div class="prov-title">Vehicle history</div>
+      <div class="prov-timeline">
+        <div class="prov-item visible">
+          <div class="prov-date">March 2023 · 0 miles</div>
+          <div class="prov-event">First registration — BMW Park Lane, London</div>
+          <div class="prov-detail">Supplied new to first keeper. Alpine White. Full BMW specification.</div>
+        </div>
+        <div class="prov-item" id="prov-1">
+          <div class="prov-date">September 2023 · 9,200 miles</div>
+          <div class="prov-event">First service — BMW main dealer</div>
+          <div class="prov-detail">Oil & filter, brake fluid, full inspection. All systems green.</div>
+        </div>
+        <div class="prov-item" id="prov-2">
+          <div class="prov-date">April 2024 · 14,600 miles</div>
+          <div class="prov-event">MOT passed — First test. Advisory: none.</div>
+          <div class="prov-detail">Clean MOT. No advisories recorded.</div>
+        </div>
+        <div class="prov-item" id="prov-3">
+          <div class="prov-date">October 2024 · 17,800 miles</div>
+          <div class="prov-event">Second service — BMW main dealer</div>
+          <div class="prov-detail">Microfilter, brake service, updated software. Full stamp.</div>
+        </div>
+        <div class="prov-item" id="prov-4">
+          <div class="prov-date">February 2025 · 18,400 miles</div>
+          <div class="prov-event">Presented to dealership — this vehicle</div>
+          <div class="prov-detail">Acquired, fully prepared. Remaining BMW warranty to April 2026.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Spec accordion -->
+    <div class="spec-section">
+      <div class="spec-group open" id="sg-tech">
+        <div class="spec-group-head" onclick="window.toggleSpec('sg-tech')">
+          <span class="spec-group-name">Mechanical</span>
+          <span class="spec-group-chevron">▾</span>
+        </div>
+        <div class="spec-rows">
+          <div class="spec-row"><span class="spec-key">Engine</span><span class="spec-val">2.0-litre 4-cyl diesel</span></div>
+          <div class="spec-row"><span class="spec-key">Power</span><span class="spec-val">190 bhp / 400 Nm</span></div>
+          <div class="spec-row"><span class="spec-key">Transmission</span><span class="spec-val">8-speed Steptronic auto</span></div>
+          <div class="spec-row"><span class="spec-key">Drive</span><span class="spec-val">Rear-wheel drive</span></div>
+          <div class="spec-row"><span class="spec-key">0–62 mph</span><span class="spec-val">6.1 seconds</span></div>
+          <div class="spec-row"><span class="spec-key">Top speed</span><span class="spec-val">155 mph (limited)</span></div>
+        </div>
+      </div>
+      <div class="spec-group" id="sg-eff">
+        <div class="spec-group-head" onclick="window.toggleSpec('sg-eff')">
+          <span class="spec-group-name">Economy & running costs</span>
+          <span class="spec-group-chevron">▾</span>
+        </div>
+        <div class="spec-rows">
+          <div class="spec-row"><span class="spec-key">Combined MPG</span><span class="spec-val">56.5 mpg (WLTP)</span></div>
+          <div class="spec-row"><span class="spec-key">CO₂</span><span class="spec-val">131g/km</span></div>
+          <div class="spec-row"><span class="spec-key">Road tax</span><span class="spec-val">£195/year (Band B)</span></div>
+          <div class="spec-row"><span class="spec-key">Service interval</span><span class="spec-val">Every 12 months / 10k miles</span></div>
+          <div class="spec-row"><span class="spec-key">Tyre size</span><span class="spec-val">225/45 R18</span></div>
+        </div>
+      </div>
+      <div class="spec-group" id="sg-tech2">
+        <div class="spec-group-head" onclick="window.toggleSpec('sg-tech2')">
+          <span class="spec-group-name">Technology & comfort</span>
+          <span class="spec-group-chevron">▾</span>
+        </div>
+        <div class="spec-rows">
+          <div class="spec-row"><span class="spec-key">Infotainment</span><span class="spec-val">BMW Live Cockpit Pro 12.3"</span></div>
+          <div class="spec-row"><span class="spec-key">Navigation</span><span class="spec-val">BMW Maps with live traffic</span></div>
+          <div class="spec-row"><span class="spec-key">Audio</span><span class="spec-val">Harman Kardon 16-speaker</span></div>
+          <div class="spec-row"><span class="spec-key">Heads-up display</span><span class="spec-val">Full-colour HUD</span></div>
+          <div class="spec-row"><span class="spec-key">Driver assist</span><span class="spec-val">Adaptive cruise, lane keep, parking assist</span></div>
+          <div class="spec-row"><span class="spec-key">Seats</span><span class="spec-val">M Sport leather, heated front</span></div>
+        </div>
+      </div>
+      <div class="spec-group" id="sg-dims">
+        <div class="spec-group-head" onclick="window.toggleSpec('sg-dims')">
+          <span class="spec-group-name">Dimensions & practicality</span>
+          <span class="spec-group-chevron">▾</span>
+        </div>
+        <div class="spec-rows">
+          <div class="spec-row"><span class="spec-key">Boot space</span><span class="spec-val">480 litres</span></div>
+          <div class="spec-row"><span class="spec-key">Length</span><span class="spec-val">4,709mm</span></div>
+          <div class="spec-row"><span class="spec-key">Wheelbase</span><span class="spec-val">2,851mm</span></div>
+          <div class="spec-row"><span class="spec-key">Rear legroom</span><span class="spec-val">Generous (4-door saloon)</span></div>
+          <div class="spec-row"><span class="spec-key">Isofix points</span><span class="spec-val">Rear × 2</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cta-row">
+      <button class="btn-primary" onclick="window.goToScreen('screen-competence')">See the numbers →</button>
+      <button class="btn-secondary" onclick="window.goToScreen('screen-action')">Next steps</button>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 4: COMPETENCE AWE — TRANSPARENT PRICING ══ -->
+  <div class="screen" id="screen-competence">
+    <div class="section-intro">
+      <div class="section-kicker">Transparent pricing</div>
+    </div>
+    <div class="price-hero">
+      <div class="price-main">£24,995</div>
+      <div class="price-sub">Drive away price · VAT applicable</div>
+      <div class="price-monthly">or from <strong>£389/month</strong> on PCP</div>
+    </div>
+
+    <div class="breakdown-section">
+      <div class="breakdown-header">What you're getting for your money</div>
+      <div class="breakdown-row">
+        <span class="breakdown-label">Base vehicle value (CAP Clean)</span>
+        <span class="breakdown-value">£23,800</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-label">Remaining BMW warranty</span>
+        <span class="breakdown-value positive">Included</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-label">Full service history (stamped)</span>
+        <span class="breakdown-value positive">Included</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-label">12-month MOT (new, passed)</span>
+        <span class="breakdown-value positive">Included</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-label">120-point preparation inspection</span>
+        <span class="breakdown-value positive">Included</span>
+      </div>
+      <div class="breakdown-row">
+        <span class="breakdown-label">Equivalent market price*</span>
+        <span class="breakdown-value">£25,400–£26,200</span>
+      </div>
+      <div class="breakdown-total">
+        <span class="breakdown-total-label">Our asking price</span>
+        <span class="breakdown-total-value">£24,995</span>
+      </div>
+    </div>
+    <div style="padding: 0 24px; font-size: 11px; color: #5A5A56; margin-bottom: 20px; line-height: 1.5;">*Based on equivalent 2023 BMW 320d M Sport, 17,000–20,000 miles, full history, AutoTrader market average — April 2025.</div>
+
+    <div class="finance-section">
+      <div class="finance-title">Model your monthly payment</div>
+      <div class="finance-card">
+        <div class="finance-monthly-display">
+          <div class="finance-amount" id="fin-amount">£389</div>
+          <div class="finance-desc">per month (PCP · 48 months · 9k miles/yr)</div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-label">
+            <span>Deposit</span>
+            <span id="dep-display">£2,500</span>
+          </div>
+          <input type="range" id="deposit-slider" min="500" max="8000" step="250" value="2500" oninput="window.updateFinance()">
+        </div>
+        <div class="slider-row">
+          <div class="slider-label">
+            <span>Term</span>
+            <span id="term-display">48 months</span>
+          </div>
+          <input type="range" id="term-slider" min="24" max="60" step="12" value="48" oninput="window.updateFinance()">
+        </div>
+        <div class="finance-note">Figures are indicative only. APR 8.9% representative. Subject to status. We'll confirm exact figures with you directly.</div>
+      </div>
+    </div>
+
+    <div class="cta-row">
+      <button class="btn-primary" onclick="window.goToScreen('screen-action')">Choose how to proceed →</button>
+      <button class="btn-secondary" onclick="window.openModal('test-drive')">Book test drive</button>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 5: ACTION — AGENCY RESTORED ══ -->
+  <div class="screen" id="screen-action">
+    <div class="action-header">
+      <div class="section-kicker">Your next move</div>
+      <div class="action-heading">What would you like to do next?</div>
+      <div class="action-sub">There's no pressure here. Every option is yours. We're here when you're ready.</div>
+    </div>
+
+    <div class="action-cards">
+      <div class="action-card primary-action" onclick="window.openModal('test-drive')">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24"><path d="M5 12h14M15 7l5 5-5 5"/></svg>
+        </div>
+        <div class="action-text">
+          <h4>Book a test drive</h4>
+          <p>Experience this car on roads you actually use. Slots available from tomorrow.</p>
+        </div>
+        <span class="action-chevron">›</span>
+      </div>
+
+      <div class="action-card" onclick="window.openModal('reserve')">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        </div>
+        <div class="action-text">
+          <h4>Reserve this vehicle</h4>
+          <p>Hold it for 48 hours with a fully refundable £99 deposit.</p>
+        </div>
+        <span class="action-chevron">›</span>
+      </div>
+
+      <div class="action-card" onclick="window.openModal('finance')">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg>
+        </div>
+        <div class="action-text">
+          <h4>Discuss finance options</h4>
+          <p>PCP, HP, or personal loan — we'll find the right structure for you.</p>
+        </div>
+        <span class="action-chevron">›</span>
+      </div>
+
+      <div class="action-card" onclick="window.openModal('partex')">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24"><path d="M17 8l4 4-4 4M7 8l-4 4 4 4M14 4l-4 16"/></svg>
+        </div>
+        <div class="action-text">
+          <h4>Get a part-exchange valuation</h4>
+          <p>Tell us about your current car. We'll give you a fair, transparent offer.</p>
+        </div>
+        <span class="action-chevron">›</span>
+      </div>
+
+      <div class="action-card" onclick="window.openModal('question')">
+        <div class="action-icon">
+          <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        </div>
+        <div class="action-text">
+          <h4>Ask us anything</h4>
+          <p>A real person will respond within 2 hours during business hours.</p>
+        </div>
+        <span class="action-chevron">›</span>
+      </div>
+    </div>
+
+    <div class="shortlist-bar">
+      <button class="shortlist-btn" id="shortlist-btn" onclick="window.toggleShortlist()">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        Save to shortlist
+      </button>
+      <button class="shortlist-btn" onclick="window.shareVehicle()">
+        <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49"/></svg>
+        Share
+      </button>
+    </div>
+
+    <div class="al-attribution">
+      <div class="al-logo-mark">
+        <svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="3" /></svg>
+      </div>
+      <span class="al-text">Powered by <span>AutoLoop</span> · Superspree Ltd</span>
+    </div>
+  </div>
+
+  <!-- ══ NAV BAR ══ -->
+  <div id="nav-bar">
+    <div class="nav-item" id="nav-place" onclick="window.goToScreen('screen-place')">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      </div>
+      <span class="nav-label">The car</span>
+    </div>
+    <div class="nav-item" id="nav-future" onclick="window.goToScreen('screen-future')">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24"><path d="M17 8l4 4-4 4M3 12h18"/></svg>
+      </div>
+      <span class="nav-label">Your life</span>
+    </div>
+    <div class="nav-item" id="nav-systems" onclick="window.goToScreen('screen-systems')">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+      </div>
+      <span class="nav-label">Full story</span>
+    </div>
+    <div class="nav-item" id="nav-competence" onclick="window.goToScreen('screen-competence')">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 100 7h5a3.5 3.5 0 110 7H6"/></svg>
+      </div>
+      <span class="nav-label">Pricing</span>
+    </div>
+    <div class="nav-item" id="nav-action" onclick="window.goToScreen('screen-action')">
+      <div class="nav-icon">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+      </div>
+      <span class="nav-label">Next steps</span>
+    </div>
+  </div>
+
+  <!-- ══ MODAL ══ -->
+  <div class="modal-backdrop" id="modal-backdrop" onclick="window.closeModal(event)">
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div id="modal-form-wrap">
+        <div class="modal-title" id="modal-title">Book a test drive</div>
+        <div class="modal-sub" id="modal-sub">Tell us a little about yourself and we'll confirm a time that suits you.</div>
+        <div class="form-field">
+          <label class="form-label">Your name</label>
+          <input class="form-input" type="text" placeholder="First and last name">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Mobile number</label>
+          <input class="form-input" type="tel" placeholder="07xxx xxxxxx">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Email address</label>
+          <input class="form-input" type="email" placeholder="you@email.com">
+        </div>
+        <button class="form-submit" onclick="window.submitForm()">Send enquiry →</button>
+      </div>
+      <div class="success-state" id="form-success">
+        <div class="success-checkmark">✓</div>
+        <div class="success-title">You're all set.</div>
+        <div class="success-body">We'll be in touch within 2 hours to confirm your booking. This vehicle is held for you while we arrange it.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   AUTOLOOP CORE JAVASCRIPT
+═══════════════════════════════════════════ */
+
+const SCREENS = ['screen-place','screen-future','screen-systems','screen-competence','screen-action'];
+const NAV_IDS = ['nav-place','nav-future','nav-systems','nav-competence','nav-action'];
+let currentScreen = null;
+let saved = false;
+let scenarioIdx = 0;
+
+/* ── NAVIGATION ── */
+window.goToScreen = function(id) {
+  if (currentScreen) {
+    document.getElementById(currentScreen).classList.remove('active');
+    document.getElementById(currentScreen).classList.add('exit');
+    setTimeout(() => {
+      const el = document.getElementById(currentScreen);
+      if (el) el.classList.remove('exit');
+    }, 600);
+  }
+  currentScreen = id;
+  const el = document.getElementById(id);
+  el.scrollTop = 0;
+  el.classList.add('active');
+  updateProgress(id);
+  updateNav(id);
+
+  if (id === 'screen-systems') {
+    setTimeout(animateProvenance, 300);
+  }
+  if (id === 'screen-future') {
+    setTimeout(animateProjection, 400);
+  }
+};
+
+function updateProgress(id) {
+  const idx = SCREENS.indexOf(id);
+  document.querySelectorAll('.prog-seg').forEach((s, i) => {
+    s.classList.remove('done','active');
+    if (i < idx) s.classList.add('done');
+    if (i === idx) s.classList.add('active');
+  });
+}
+
+function updateNav(id) {
+  const idx = SCREENS.indexOf(id);
+  document.querySelectorAll('.nav-item').forEach((n, i) => {
+    n.classList.toggle('active', i === idx);
+  });
+}
+
+/* ── ENTRY ── */
+window.enterApp = function() {
+  const tapScreen = document.getElementById('screen-tap');
+  tapScreen.classList.add('exit');
+  setTimeout(() => { tapScreen.classList.remove('active', 'exit'); }, 600);
+
+  document.getElementById('nav-bar').classList.add('visible');
+  setTimeout(() => window.goToScreen('screen-place'), 100);
+
+  drawHero();
+  drawScenes();
+};
+
+/* ── LIFESTYLE SCENARIOS ── */
+window.setScenario = function(idx, btn) {
+  document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.ls-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('scenario-' + idx).classList.add('active');
+  btn.classList.add('active');
+  scenarioIdx = idx;
+};
+
+/* ── SPEC ACCORDION ── */
+window.toggleSpec = function(id) {
+  document.getElementById(id).classList.toggle('open');
+};
+
+/* ── PROVENANCE ANIMATION ── */
+function animateProvenance() {
+  const items = ['prov-1','prov-2','prov-3','prov-4'];
+  items.forEach((id, i) => {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('visible');
+    }, i * 140);
+  });
+}
+
+/* ── PROJECTION ANIMATION ── */
+function animateProjection() {
+  const nodes = ['pn1','pn2','pn3'];
+  nodes.forEach((id, i) => {
+    setTimeout(() => {
+      document.getElementById(id).classList.add('reached');
+    }, (i + 1) * 300);
+  });
+  setTimeout(() => {
+    const fill = document.getElementById('proj-fill');
+    if (fill) fill.style.width = '100%';
+  }, 200);
+}
+
+/* ── FINANCE CALCULATOR ── */
+window.updateFinance = function() {
+  const dep = parseInt(document.getElementById('deposit-slider').value);
+  const term = parseInt(document.getElementById('term-slider').value);
+  const price = 24995;
+  const apr = 0.089;
+  const balloon = price * 0.42;
+  const financed = price - dep - balloon;
+  const monthlyRate = apr / 12;
+  const monthly = (financed * monthlyRate * Math.pow(1 + monthlyRate, term)) / (Math.pow(1 + monthlyRate, term) - 1);
+
+  document.getElementById('fin-amount').textContent = '£' + Math.round(monthly + (balloon * monthlyRate));
+  document.getElementById('dep-display').textContent = '£' + dep.toLocaleString();
+  document.getElementById('term-display').textContent = term + ' months';
+};
+
+/* ── SHORTLIST ── */
+window.toggleShortlist = function() {
+  saved = !saved;
+  const btn = document.getElementById('shortlist-btn');
+  btn.classList.toggle('saved', saved);
+  btn.innerHTML = saved
+    ? '<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg> Saved to shortlist'
+    : '<svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg> Save to shortlist';
+};
+
+/* ── SHARE ── */
+window.shareVehicle = function() {
+  if (navigator.share) {
+    navigator.share({ title: '2023 BMW 320d M Sport — £24,995', text: 'I found this on AutoLoop.', url: window.location.href });
+  } else {
+    navigator.clipboard && navigator.clipboard.writeText(window.location.href);
+    alert('Link copied to clipboard');
+  }
+};
+
+/* ── MODAL ── */
+const MODAL_CONTENT = {
+  'test-drive': { title: 'Book a test drive', sub: 'Tell us a little about yourself and we\'ll confirm a time that suits you.' },
+  'reserve': { title: 'Reserve this vehicle', sub: 'A £99 fully refundable deposit holds this car for 48 hours while you decide.' },
+  'finance': { title: 'Discuss finance', sub: 'We\'ll find the right structure — PCP, HP, or personal loan.' },
+  'partex': { title: 'Part-exchange valuation', sub: 'Tell us about your current car and we\'ll give you a fair, transparent offer.' },
+  'question': { title: 'Ask us anything', sub: 'A real person will respond within 2 hours during business hours.' }
+};
+
+window.openModal = function(type) {
+  const content = MODAL_CONTENT[type] || MODAL_CONTENT['test-drive'];
+  document.getElementById('modal-title').textContent = content.title;
+  document.getElementById('modal-sub').textContent = content.sub;
+  document.getElementById('modal-form-wrap').style.display = 'block';
+  document.getElementById('form-success').classList.remove('show');
+  document.getElementById('modal-backdrop').classList.add('open');
+};
+
+window.closeModal = function(e) {
+  if (e.target === document.getElementById('modal-backdrop')) {
+    document.getElementById('modal-backdrop').classList.remove('open');
+  }
+};
+
+window.submitForm = function() {
+  document.getElementById('modal-form-wrap').style.display = 'none';
+  document.getElementById('form-success').classList.add('show');
+};
+
+/* ═══════════════════════════════════════════
+   CANVAS DRAWING — Atmospheric visuals
+   (CSS-only approach; no images required)
+═══════════════════════════════════════════ */
+
+function drawHero() {
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+  const W = canvas.offsetWidth, H = canvas.offsetHeight;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // Sky gradient
+  const sky = ctx.createLinearGradient(0, 0, 0, H * 0.6);
+  sky.addColorStop(0, '#0D1520');
+  sky.addColorStop(0.5, '#1A2535');
+  sky.addColorStop(1, '#2A3545');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  // Stars
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  for (let i = 0; i < 80; i++) {
+    const x = Math.random() * W, y = Math.random() * H * 0.5;
+    const r = Math.random() * 1.2;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  }
+
+  // Horizon glow
+  const glow = ctx.createRadialGradient(W * 0.5, H * 0.62, 10, W * 0.5, H * 0.62, W * 0.7);
+  glow.addColorStop(0, 'rgba(196,146,42,0.25)');
+  glow.addColorStop(0.4, 'rgba(196,146,42,0.06)');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  // Road surface
+  const road = ctx.createLinearGradient(0, H * 0.6, 0, H);
+  road.addColorStop(0, '#1A1A17');
+  road.addColorStop(1, '#0A0A09');
+  ctx.fillStyle = road;
+  ctx.fillRect(0, H * 0.6, W, H * 0.4);
+
+  // Road marking perspective lines
+  ctx.strokeStyle = 'rgba(196,146,42,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(W * 0.5, H * 0.62); ctx.lineTo(W * 0.05, H); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(W * 0.5, H * 0.62); ctx.lineTo(W * 0.95, H); ctx.stroke();
+
+  // Centre dashes
+  ctx.strokeStyle = 'rgba(255,255,240,0.25)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([18, 22]);
+  ctx.beginPath(); ctx.moveTo(W * 0.5, H * 0.62); ctx.lineTo(W * 0.5, H); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // BMW 3 Series silhouette — clean, refined
+  drawCarSilhouette(ctx, W, H);
+
+  // Headlight beams
+  drawHeadlights(ctx, W, H);
+}
+
+function drawCarSilhouette(ctx, W, H) {
+  const cx = W * 0.5, cy = H * 0.63;
+  const cw = W * 0.72, ch = H * 0.14;
+  const x0 = cx - cw / 2;
+
+  // Shadow
+  const shadow = ctx.createEllipse || null;
+  ctx.fillStyle = 'rgba(0,0,0,0.5)';
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + ch * 0.92, cw * 0.44, ch * 0.18, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Body shape — modern saloon profile
+  ctx.fillStyle = '#1A2030';
+  ctx.beginPath();
+  ctx.moveTo(x0 + cw * 0.06, cy + ch * 0.72);
+  // Bonnet
+  ctx.lineTo(x0 + cw * 0.12, cy + ch * 0.32);
+  ctx.lineTo(x0 + cw * 0.22, cy + ch * 0.22);
+  // Windscreen
+  ctx.lineTo(x0 + cw * 0.28, cy - ch * 0.12);
+  // Roofline
+  ctx.bezierCurveTo(x0 + cw * 0.35, cy - ch * 0.32, x0 + cw * 0.55, cy - ch * 0.35, x0 + cw * 0.68, cy - ch * 0.16);
+  // Rear screen
+  ctx.lineTo(x0 + cw * 0.76, cy + ch * 0.18);
+  // Boot
+  ctx.lineTo(x0 + cw * 0.88, cy + ch * 0.32);
+  ctx.lineTo(x0 + cw * 0.94, cy + ch * 0.72);
+  ctx.closePath();
+  ctx.fill();
+
+  // Highlight strip along roofline
+  ctx.strokeStyle = 'rgba(196,146,42,0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x0 + cw * 0.28, cy - ch * 0.12);
+  ctx.bezierCurveTo(x0 + cw * 0.35, cy - ch * 0.32, x0 + cw * 0.55, cy - ch * 0.35, x0 + cw * 0.68, cy - ch * 0.16);
+  ctx.stroke();
+
+  // Wheels
+  drawWheel(ctx, x0 + cw * 0.21, cy + ch * 0.7, cw * 0.085);
+  drawWheel(ctx, x0 + cw * 0.79, cy + ch * 0.7, cw * 0.085);
+
+  // Window reflections
+  ctx.fillStyle = 'rgba(100,140,200,0.1)';
+  ctx.beginPath();
+  ctx.moveTo(x0 + cw * 0.295, cy - ch * 0.05);
+  ctx.lineTo(x0 + cw * 0.28, cy - ch * 0.12);
+  ctx.lineTo(x0 + cw * 0.35, cy - ch * 0.29);
+  ctx.lineTo(x0 + cw * 0.44, cy - ch * 0.3);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(x0 + cw * 0.46, cy - ch * 0.31);
+  ctx.lineTo(x0 + cw * 0.60, cy - ch * 0.31);
+  ctx.lineTo(x0 + cw * 0.66, cy - ch * 0.18);
+  ctx.lineTo(x0 + cw * 0.50, cy - ch * 0.06);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawWheel(ctx, x, y, r) {
+  // Tyre
+  ctx.fillStyle = '#0D0D0B';
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+  // Rim
+  ctx.fillStyle = '#2A2A28';
+  ctx.beginPath(); ctx.arc(x, y, r * 0.72, 0, Math.PI * 2); ctx.fill();
+  // Spokes
+  ctx.strokeStyle = 'rgba(180,160,100,0.4)';
+  ctx.lineWidth = 1.5;
+  for (let a = 0; a < Math.PI * 2; a += Math.PI * 2 / 5) {
+    ctx.beginPath();
+    ctx.moveTo(x + Math.cos(a) * r * 0.16, y + Math.sin(a) * r * 0.16);
+    ctx.lineTo(x + Math.cos(a) * r * 0.65, y + Math.sin(a) * r * 0.65);
+    ctx.stroke();
+  }
+  // Centre cap
+  ctx.fillStyle = 'rgba(196,146,42,0.6)';
+  ctx.beginPath(); ctx.arc(x, y, r * 0.14, 0, Math.PI * 2); ctx.fill();
+}
+
+function drawHeadlights(ctx, W, H) {
+  const cx = W * 0.5, cy = H * 0.63;
+  const cw = W * 0.72;
+  const x0 = cx - cw / 2;
+
+  // Left headlight beam
+  const lx = x0 + cw * 0.1;
+  const ly = cy + cw * 0.02;
+  const lg = ctx.createConicalGradient ? null : ctx.createLinearGradient(lx, ly, lx - W * 0.3, H);
+  const beamL = ctx.createRadialGradient(lx, ly, 0, lx - W * 0.25, H * 0.85, W * 0.45);
+  beamL.addColorStop(0, 'rgba(220,210,180,0.18)');
+  beamL.addColorStop(0.5, 'rgba(196,146,42,0.04)');
+  beamL.addColorStop(1, 'transparent');
+  ctx.fillStyle = beamL;
+  ctx.beginPath();
+  ctx.moveTo(lx, ly);
+  ctx.lineTo(lx - W * 0.45, H * 0.9);
+  ctx.lineTo(lx - W * 0.05, H * 0.9);
+  ctx.closePath();
+  ctx.fill();
+
+  // Right headlight beam
+  const rx = x0 + cw * 0.9;
+  const ry = ly;
+  const beamR = ctx.createRadialGradient(rx, ry, 0, rx + W * 0.25, H * 0.85, W * 0.45);
+  beamR.addColorStop(0, 'rgba(220,210,180,0.18)');
+  beamR.addColorStop(0.5, 'rgba(196,146,42,0.04)');
+  beamR.addColorStop(1, 'transparent');
+  ctx.fillStyle = beamR;
+  ctx.beginPath();
+  ctx.moveTo(rx, ry);
+  ctx.lineTo(rx + W * 0.45, H * 0.9);
+  ctx.lineTo(rx + W * 0.05, H * 0.9);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawScenes() {
+  const scenes = [
+    { id: 'scene-0', type: 'motorway_dawn' },
+    { id: 'scene-1', type: 'suburb_morning' },
+    { id: 'scene-2', type: 'country_road' },
+    { id: 'scene-3', type: 'motorway_night' }
+  ];
+  scenes.forEach(s => drawScene(s.id, s.type));
+}
+
+function drawScene(id, type) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const W = canvas.offsetWidth || 320, H = canvas.offsetHeight || 180;
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  const palettes = {
+    motorway_dawn: { sky: ['#1A0A05','#3D1A0A','#7A3510','#C4631A'], ground: '#1A1510', accent: 'rgba(200,100,30,' },
+    suburb_morning: { sky: ['#0A1520','#1A3050','#2A5080','#4A90C0'], ground: '#1A2010', accent: 'rgba(74,144,192,' },
+    country_road: { sky: ['#050A05','#0D1A0D','#1A3020','#2A5035'], ground: '#0D1005', accent: 'rgba(42,80,53,' },
+    motorway_night: { sky: ['#000005','#050510','#080820','#0D1030'], ground: '#050508', accent: 'rgba(20,20,80,' }
+  };
+
+  const p = palettes[type];
+  const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.65);
+  p.sky.forEach((c, i) => skyGrad.addColorStop(i / (p.sky.length - 1), c));
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Ground
+  ctx.fillStyle = p.ground;
+  ctx.fillRect(0, H * 0.62, W, H * 0.38);
+
+  // Horizon glow
+  const hg = ctx.createRadialGradient(W * 0.5, H * 0.65, 0, W * 0.5, H * 0.65, W * 0.6);
+  hg.addColorStop(0, p.accent + '0.3)');
+  hg.addColorStop(1, 'transparent');
+  ctx.fillStyle = hg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Road
+  ctx.fillStyle = '#151512';
+  ctx.beginPath();
+  ctx.moveTo(W * 0.5, H * 0.64); ctx.lineTo(0, H); ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+
+  // Centre dashes
+  ctx.strokeStyle = 'rgba(255,255,240,0.2)'; ctx.lineWidth = 1.5; ctx.setLineDash([10, 14]);
+  ctx.beginPath(); ctx.moveTo(W * 0.5, H * 0.64); ctx.lineTo(W * 0.5, H); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Small car silhouette
+  const csx = W * 0.5, csy = H * 0.66, csw = W * 0.35, csh = H * 0.12;
+  ctx.fillStyle = type === 'motorway_night' ? '#1A1820' : '#1C1E22';
+  ctx.beginPath();
+  ctx.moveTo(csx - csw * 0.5, csy + csh * 0.7);
+  ctx.lineTo(csx - csw * 0.4, csy + csh * 0.15);
+  ctx.bezierCurveTo(csx - csw * 0.3, csy - csh * 0.2, csx + csw * 0.3, csy - csh * 0.2, csx + csw * 0.4, csy + csh * 0.15);
+  ctx.lineTo(csx + csw * 0.5, csy + csh * 0.7);
+  ctx.closePath(); ctx.fill();
+
+  // Headlight dots
+  ctx.fillStyle = 'rgba(230,210,160,0.9)';
+  ctx.beginPath(); ctx.arc(csx - csw * 0.4, csy + csh * 0.35, 2, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(csx + csw * 0.4, csy + csh * 0.35, 2, 0, Math.PI * 2); ctx.fill();
+
+  // Stars for dark scenes
+  if (type === 'motorway_night' || type === 'country_road') {
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    for (let i = 0; i < 40; i++) {
+      ctx.beginPath();
+      ctx.arc(Math.random() * W, Math.random() * H * 0.55, Math.random() * 0.9, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+}
+
+/* Resize handler */
+window.addEventListener('resize', () => {
+  if (currentScreen) { drawHero(); drawScenes(); }
+});
+
+/* Direct button wiring */
+var _beginBtn = document.getElementById('begin-btn');
+if (_beginBtn) {
+  _beginBtn.onclick = function() { window.enterApp(); };
+}
+</script>
+</body>
+</html>
